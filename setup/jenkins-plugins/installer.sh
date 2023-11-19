@@ -3,31 +3,26 @@
 set -eo pipefail
 
 JENKINS_URL='http://localhost:8080'
+JENKINS_USER='admin'
+JENKINS_PASSWORD='admin123'
 
-JENKINS_CRUMB=$(curl -s --cookie-jar /tmp/cookies -u admin:admin ${JENKINS_URL}/crumbIssuer/api/json | jq .crumb -r)
+# Function to get Jenkins crumb
+get_crumb() {
+    curl -s --cookie-jar /tmp/cookies -u "${JENKINS_USER}:${JENKINS_PASSWORD}" "${JENKINS_URL}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)"
+}
 
-JENKINS_TOKEN=$(curl -s -X POST -H "Jenkins-Crumb:${JENKINS_CRUMB}" --cookie /tmp/cookies "${JENKINS_URL}/me/descriptorByName/jenkins.security.ApiTokenProperty/generateNewToken?newTokenName=demo-token66" -u admin:admin | jq .data.tokenValue -r)
+# Function to install a Jenkins plugin
+install_plugin() {
+    local plugin_name="$1"
+    local crumb=$(get_crumb)
 
-echo $JENKINS_URL
-echo $JENKINS_CRUMB
-echo $JENKINS_TOKEN
+    echo "Installing plugin: ${plugin_name}"
+    curl -s -X POST --data "<jenkins><install plugin='${plugin_name}' /></jenkins>" -H 'Content-Type: text/xml' -H "${crumb}" "${JENKINS_URL}/pluginManager/installNecessaryPlugins" --cookie /tmp/cookies --user "${JENKINS_USER}:${JENKINS_PASSWORD}"
+}
 
-while read plugin; do
-   echo "........Installing ${plugin} .."
-   curl -s POST --data "<jenkins><install plugin='${plugin}' /></jenkins>" -H 'Content-Type: text/xml' "$JENKINS_URL/pluginManager/installNecessaryPlugins" --user "admin:$JENKINS_TOKEN"
+# Read plugins from the plugins.txt file and install each one
+while IFS= read -r plugin; do
+    install_plugin "$plugin"
 done < plugins.txt
 
-
-#### we also need to do a restart for some plugins
-
-#### check all plugins installed in jenkins
-# 
-# http://<jenkins-url>/script
-
-# Jenkins.instance.pluginManager.plugins.each{
-#   plugin -> 
-#     println ("${plugin.getDisplayName()} (${plugin.getShortName()}): ${plugin.getVersion()}")
-# }
-
-
-#### Check for updates/errors - http://<jenkins-url>/updateCenter
+echo "Plugin installation complete."
