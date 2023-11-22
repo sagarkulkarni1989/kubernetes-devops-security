@@ -49,7 +49,37 @@ deny[msg] {
 # Do not upgrade your system packages
 warn[msg] {
     input[i].Cmd == "run"
-    val := concat(" ", input[i].Value)
-    matches := regex.match(".*?(apk|yum|dnf|apt|pip).+?(install|[dist-|check-|group]?up[grade|date]).*", lower(val))
-    matches == true
+    val := input[i].Value
+    contains(lower(val), ["apk", "yum", "dnf", "apt", "pip"])
+    contains(lower(val), ["install", "upgrade", "dist-upgrade", "check-upgrade", "group-upgrade", "date-upgrade"])
     msg = sprintf("Do not upgrade your system packages: %s", [val])
+}
+
+# Do not use ADD if possible
+deny[msg] {
+    input[i].Cmd == "add"
+    msg = sprintf("Use COPY instead of ADD")
+}
+
+# Any user...
+deny[msg] {
+    input[i].Cmd == "user"
+    contains(lower(input[i].Value[_]), ["root", "toor", "0"])
+    msg = sprintf("Do not run as root, use USER instead")
+}
+
+# Do not sudo
+deny[msg] {
+    input[i].Cmd == "run"
+    val := concat(" ", input[i].Value)
+    contains(lower(val), "sudo")
+    msg = sprintf("Do not use 'sudo' command")
+}
+
+# Use multi-stage builds
+deny[msg] {
+    input[i].Cmd == "copy"
+    val := concat(" ", input[i].Flags)
+    contains(lower(val), "--from=")
+    msg = sprintf("You COPY, but do not appear to use multi-stage builds...")
+}
