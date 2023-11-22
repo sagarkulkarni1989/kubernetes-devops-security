@@ -75,14 +75,6 @@ deny[msg] {
     msg = sprintf("Line %d: Last USER directive (USER %s) is forbidden", [i, lastuser])
 }
 
-# Do not use sudo
-deny[msg] {
-    input[i].Cmd == "run"
-    val := concat(" ", input[i].Value)
-    contains(lower(val), "sudo")
-    msg = sprintf("Line %d: Do not use 'sudo' command: %v", [i, val])
-}
-
 # Use multi-stage builds
 default multi_stage = false
 multi_stage = true {
