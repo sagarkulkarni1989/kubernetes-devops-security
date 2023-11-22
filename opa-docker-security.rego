@@ -62,28 +62,10 @@ deny[msg] {
 }
 
 # Any user...
-any_user {
+deny[msg] {
     input[i].Cmd == "user"
- }
-
-deny[msg] {
-    not any_user
-    msg = "Do not run as root, use USER instead"
-}
-
-# ... but do not root
-forbidden_users = [
-    "root",
-    "toor",
-    "0"
-]
-
-deny[msg] {
-    user_cmd := "user"
-    users := [name | input[i].Cmd == user_cmd; name := input[i].Value]
-    lastuser := users[count(users)-1]
-    contains(lower(lastuser[_]), forbidden_users[_])
-    msg = sprintf("Line %d: Last USER directive (USER %s) is forbidden", [i, lastuser])
+    contains(lower(input[i].Value[_]), ["root", "toor", "0"])
+    msg = sprintf("Line %d: Do not run as root, use USER instead", [i])
 }
 
 # Do not sudo
@@ -95,13 +77,9 @@ deny[msg] {
 }
 
 # Use multi-stage builds
-default multi_stage = false
-multi_stage = true {
+deny[msg] {
     input[i].Cmd == "copy"
     val := concat(" ", input[i].Flags)
     contains(lower(val), "--from=")
-}
-deny[msg] {
-    multi_stage == false
-    msg = sprintf("You COPY, but do not appear to use multi-stage builds...", [])
+    msg = sprintf("You COPY, but do not appear to use multi-stage builds...")
 }
