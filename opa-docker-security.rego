@@ -66,11 +66,6 @@ any_user {
     input[i].Cmd == "user"
 }
 
-deny[msg] {
-    not any_user
-    msg = "Do not run as root, use USER instead"
-}
-
 # ... but do not root
 forbidden_users = [
     "root",
@@ -79,11 +74,8 @@ forbidden_users = [
 ]
 
 deny[msg] {
-    command := "user"
-    users := [name | input[i].Cmd == "user"; name := input[i].Value]
-    lastuser := users[count(users)-1]
-    contains(lower(lastuser[_]), forbidden_users[_])
-    msg = sprintf("Last USER directive (USER %s) is forbidden", [lastuser])
+    not any_user
+    msg = sprintf("Do not run as root, use USER instead")
 }
 
 # Do not sudo
