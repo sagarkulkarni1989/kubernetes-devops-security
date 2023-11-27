@@ -18,7 +18,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>9.0.43</java.version>
+		<java.version>1.8</java.version>
+		<tomcat.version>9.0.43</tomcat.version>
 	</properties>
 
 	<dependencies>
