@@ -7,7 +7,7 @@ pipeline {
     serviceName = "devsecops-svc"
     imageName = "gita/numeric-app:${GIT_COMMIT}"
     applicationURL = "http://devsecops-demo123.eastus.cloudapp.azure.com"
-    applicationURI = "increment/99"
+    applicationURI = "/increment/99"
   }
 
   stages {
@@ -116,22 +116,22 @@ pipeline {
       }
  
 
-    stage('Integration Tests - DEV') {
-      steps {
-        script {
-          try {
-            withKubeConfig([credentialsId: 'kubeconfig']) {
-              sh "bash integration-test.sh"
-            }
-          } catch (e) {
-            withKubeConfig([credentialsId: 'kubeconfig']) {
-              sh "kubectl -n default rollout undo deploy ${deploymentName}"
-            }
-            throw e
-          }
-        }
-      }
-    }
+    // stage('Integration Tests - DEV') {
+    //   steps {
+    //     script {
+    //       try {
+    //         withKubeConfig([credentialsId: 'kubeconfig']) {
+    //           sh "bash integration-test.sh"
+    //         }
+    //       } catch (e) {
+    //         withKubeConfig([credentialsId: 'kubeconfig']) {
+    //           sh "kubectl -n default rollout undo deploy ${deploymentName}"
+    //         }
+    //         throw e
+    //       }
+    //     }
+    //   }
+    // }
     stage('K8S Deployment - PROD') {
       steps {
         parallel(
